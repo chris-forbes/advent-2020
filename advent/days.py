@@ -1,5 +1,5 @@
 from typing import List, Union
-
+from advent.model.password_policy import PasswordPolicy
 
 def find_matching_sum_two(data_list: List[int], expected: int) -> Union[int, int]:
 	"""
@@ -58,4 +58,46 @@ def find_product(data_list: List[int], expected: int, sum_method: (List[int], in
 	:param expected: The value we're looking to find
 	"""
 	return multiply(sum_method(data_list, expected))
-	
+
+
+def extract_policy(password_line: str) -> PasswordPolicy:
+	"""
+	Extracts the password policy from the given password_line
+	:param password_line: Full line from the test files
+	"""
+	ranges, mandatory_char, password = password_line.split(' ')
+	minimum, maximum = ranges.split('-')
+	return PasswordPolicy(int(minimum), int(maximum), mandatory_char.replace(':',''))
+
+
+def count_based_policy(policy: PasswordPolicy, password_line: str):
+	"""
+	Validates a given password policy against a password line
+	:param policy: password policy object
+	:param password_line: the password line string
+	"""
+	_, _, password_str = password_line.split(' ')
+	counted_characters = str(password_str).count(policy.character)
+	return counted_characters >= policy.minimum and counted_characters <= policy.maximum
+
+def positional_based_policy(policy: PasswordPolicy, password_line: str):
+	"""
+	Validates a given password policy against a password line
+	:param policy: password policy object
+	:param password_line: the password line string
+	"""
+	_, _, password_str = password_line.split(' ')
+	position_one = password_str[policy.minimum -1 ]
+	position_two = password_str[policy.maximum -1 ]
+	return (position_one == policy.character) ^ (position_two == policy.character)
+
+
+def validate_policy(policy: PasswordPolicy, password_line: str, password_validation_policy = count_based_policy) -> bool:
+	"""
+	Validates thepassword based on the password_validation_policy
+	:param policy: password policy object
+	:param password_line: the password line string
+	:param password_validation_policy: The policy to use for validation
+	"""
+	return password_validation_policy(policy, password_line)
+
