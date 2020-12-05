@@ -1,7 +1,9 @@
 from typing import List, Union, Tuple
 from advent.model.password_policy import PasswordPolicy
 from advent.model.passport import Passport
+from math import ceil
 import re
+
 
 def find_matching_sum_two(data_list: List[int], expected: int) -> Union[int, int]:
 	"""
@@ -281,3 +283,86 @@ def count_valid_passports(passport_list: List[Passport], validation_method: ()) 
 		if validation_method(passport):
 			count += 1
 	return count
+
+
+def get_f_from_list(plane_range: List[int]) -> List[int]:
+	"""
+	returns the front half of the list
+	:param plane_range: the range to work with
+	:return: the front half of the list
+	"""
+	current_length = len(plane_range) - 1
+	middle_sector = ceil(current_length / 2)
+	return plane_range[:-middle_sector]
+
+
+def get_b_from_list(plane_range: List[int]) -> List[int]:
+	"""
+	returns the front half of the list
+	:param plane_range: the range to work with
+	:return: the front half of the list
+	"""
+	current_length = len(plane_range) - 1
+	middle_sector = ceil(current_length / 2)
+	return plane_range[middle_sector:]
+
+
+def parse_boarding_pass_string(boarding_pass: str, plane_range: range = range(0, 128), f_function: () = get_f_from_list, b_function: () = get_b_from_list) -> List[int]:
+	"""
+	Parses a given boarding pass string
+	:param plane_range: Optional range, default 0,128
+	:param f_function: function for forward slicing
+	:param b_function: function for backward slicing
+	:param boarding_pass: the boarding pass string
+	:return: the row number
+	"""
+
+	for char in boarding_pass:
+		if char.lower() == 'f':
+			plane_range = f_function(plane_range)
+		elif char.lower() == 'b':
+			plane_range = b_function(plane_range)
+	if boarding_pass[:len(boarding_pass) - 3][-1].lower() == 'f':
+		x = min(plane_range)
+		return x
+	elif boarding_pass[:len(boarding_pass) - 3][-1].lower() == 'b':
+		y = max(plane_range)
+		return y
+	return plane_range
+
+
+def parse_column_details(boarding_pass: str, plane_range: range = range(0, 8), f_function: () = get_f_from_list, b_function: () = get_b_from_list) -> List[int]:
+	"""
+	determines the column number from the string
+	Parses a given boarding pass string
+	:param plane_range: Optional range, default 0,128
+	:param f_function: function for forward slicing
+	:param b_function: function for backward slicing
+	:param boarding_pass: the boarding pass string
+	:return: the row number
+	:return: the column number
+	"""
+	last_three = boarding_pass[-3:]
+	for char in last_three:
+		if char.lower() == 'l':
+			plane_range = f_function(plane_range)
+		elif char.lower() == 'r':
+			plane_range = b_function(plane_range)
+	if boarding_pass[-1].lower() == 'l':
+		x = min(plane_range)
+		return x
+	elif boarding_pass[-1].lower() == 'r':
+		x = max(plane_range)
+		return x
+
+
+def determine_seat_number (row: int, column: int) -> int:
+	"""
+	Determines the seat number from the row and column
+	:param row: the row number you worked out
+	:param column:  the column number you worked out
+	:return: the seat number
+	"""
+	seat = row * 8
+	seat += column
+	return seat
