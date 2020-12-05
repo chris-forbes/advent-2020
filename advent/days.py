@@ -1,6 +1,7 @@
 from typing import List, Union, Tuple
 from advent.model.password_policy import PasswordPolicy
-
+from advent.model.passport import Passport
+import re
 
 def find_matching_sum_two(data_list: List[int], expected: int) -> Union[int, int]:
 	"""
@@ -156,3 +157,127 @@ def traverse_continious(map_data: List[str], movement: Tuple[int, int]) -> int:
 		if current_y >= len(map_data):
 			return trees_encountered
 	return trees_encountered
+
+
+def extract_passport_from_string(data_line: str) -> Passport:
+	"""
+	Takes a password string with all data and parses it into a passport object
+	:param data_line: the full data line
+	:return: @Passport object
+	"""
+	passport = Passport()
+	data_dict = {}
+	for data_element in data_line.split(' '):
+		if data_element == '':
+			continue
+		key, value = data_element.split(':')
+		data_dict[key] = value
+	passport.byr = int(data_dict['byr']) if 'byr' in data_dict.keys() else None
+	passport.pid = data_dict['pid'] if 'pid' in data_dict.keys() else None
+	passport.eyr = int(data_dict['eyr']) if 'eyr' in data_dict.keys() else None
+	passport.hcl = data_dict['hcl'] if 'hcl' in data_dict.keys() else None
+	passport.ecl = data_dict['ecl'] if 'ecl' in data_dict.keys() else None
+	passport.cid = data_dict['cid'] if 'cid' in data_dict.keys() else None
+	passport.iyr = int(data_dict['iyr']) if 'iyr' in data_dict.keys() else None
+	passport.hgt = data_dict['hgt'] if 'hgt' in data_dict.keys() else None
+	return passport
+
+
+def parse_passport_file(file_path: str) -> List[Passport]:
+	"""
+	Parses the give file and returns a list of @Passport objects
+	:param file_path: the path to the data file
+	:returns: List of passport objects
+	"""
+	passports = []
+	with open(file_path, 'r') as input_file:
+		full_string = ""
+		for line in input_file:
+			if line == '\n':
+				passports.append(extract_passport_from_string(full_string))
+				full_string = ""
+				continue
+			full_string += str(line).replace('\n', ' ')
+		passports.append(extract_passport_from_string(full_string))
+	return passports
+
+
+def flexible_validation(passport: Passport) -> bool:
+	"""
+	Determisn if a passport is flexible
+	:param passport: the passport to check
+	:return: valid or not
+	"""
+	if passport.ecl and passport.pid and passport.eyr and passport.hcl and passport.byr and passport.iyr and passport.hgt:
+		return True
+	return False
+
+
+def strict_validation(passport: Passport) -> bool:
+	if not passport.byr:
+		return False
+	else:
+		if passport.byr < 1920 or passport.byr > 2002:
+			return False
+
+	if not passport.iyr:
+		return False
+	else:
+		if passport.iyr < 2010 or passport.iyr > 2020:
+			return False
+	if not passport.eyr:
+		return False
+	else:
+		if passport.eyr < 2010 or passport.eyr > 2030:
+			return False
+
+	if not passport.hgt:
+		return False
+	elif "cm" in passport.hgt or "in" in passport.hgt:
+		numbers = re.findall('[0-9]+', passport.hgt)
+		numbers = int(numbers[0])
+		if "cm" in passport.hgt:
+			if numbers < 150 or numbers > 193:
+				return False
+		elif "in" in passport.hgt:
+			if numbers < 59 or numbers > 76:
+				return False
+		else:
+			return False
+	else:
+		return False
+
+	if not passport.hcl:
+		return False
+	else:
+		pattern = re.compile("#[a-f 0-9]{6}")
+		if not pattern.match(passport.hcl):
+			return False
+
+	if not passport.ecl:
+		return False
+	else:
+		valid = ['amb','blu','brn','gry','grn','hzl','oth']
+		if passport.ecl not in valid:
+			return False
+
+	if not passport.pid:
+		return False
+	else:
+		if len(passport.pid) != 9:
+			return False
+	return True
+
+
+def count_valid_passports(passport_list: List[Passport], validation_method: ()) -> int:
+	"""
+	Uses the validation method to count how many valid passports have been parsed
+	:param passport_list: list of passport objects
+	:param validation_method: the method to use for determining if a passport object is valid
+	:return: number of valid passports
+	"""
+	count = 0
+	for passport in passport_list:
+		if validation_method(passport):
+			count += 1
+	return count
