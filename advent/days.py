@@ -366,3 +366,62 @@ def determine_seat_number (row: int, column: int) -> int:
 	seat = row * 8
 	seat += column
 	return seat
+
+
+def load_customs_files(file_path: str) -> List[int]:
+	"""
+	detemines which questions where answered yes
+	:param file_path: fulle path to the file
+	:return: list of each groups answers
+	"""
+	az_pattern = re.compile('[a-z]+')
+	questions_answered_per_group = []
+	with open(file_path, 'r') as input_file:
+		questions = set()
+		for line in input_file:
+			if az_pattern.match(line):
+				for char in line.replace('\n', ''):
+					questions.add(char)
+			else:
+				sum_of_questions_answered = len(questions)
+				questions_answered_per_group.append(sum_of_questions_answered)
+				questions = set()
+				continue
+		questions_answered_per_group.append(len(questions))
+	return questions_answered_per_group
+
+
+def load_customs_file_corrected(file_path: str) -> List[int]:
+	"""
+		determines which questions where all group members answered yes
+		:param file_path: fulle path to the file
+		:return: list of each groups answers
+	"""
+	az_pattern = re.compile('[a-z]+')
+	questions_answered_per_group = []
+	with open(file_path, 'r') as input_file:
+		questions = {}
+		members_per_party = 0
+		for line in input_file:
+			if az_pattern.match(line):
+				members_per_party += 1
+				for char in line.replace('\n', ''):
+					if char in questions.keys():
+						questions[char] += 1
+					else:
+						questions[char] = 1
+			else:
+				answered_by_all = 0
+				for k,v in questions.items():
+					if v == members_per_party:
+						answered_by_all += 1
+				questions_answered_per_group.append(answered_by_all)
+				questions = {}
+				members_per_party = 0
+
+		answered_by_all = 0
+		for k, v in questions.items():
+			if v == members_per_party:
+				answered_by_all += 1
+		questions_answered_per_group.append(answered_by_all)
+	return questions_answered_per_group
