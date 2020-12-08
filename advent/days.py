@@ -425,3 +425,67 @@ def load_customs_file_corrected(file_path: str) -> List[int]:
 				answered_by_all += 1
 		questions_answered_per_group.append(answered_by_all)
 	return questions_answered_per_group
+
+
+def load_instructions_file(file_path: str) -> List[str]:
+	"""
+	Parses the instruciton file into a list
+	:param file_path: the full path to the instructions file
+	:return: the instructions in an OrderedList
+	"""
+	instructions = []
+	with open(file_path, 'r') as input_file:
+		for line in input_file:
+			instructions.append(line.strip())
+	return instructions
+
+
+def run_instructions(instructions: List[str]) -> int:
+	"""
+	Runs the given instruction set until it is about to run a command for the second time
+	:param instructions: instruction set
+	:return: accumulator -> int
+	"""
+	accumulator = 0
+	inst_ptr = 0
+	instruction_history = []
+	all_jump_instructions = []
+	all_nop_instructions = []
+	while inst_ptr != len(instructions):
+		instruction, value = instructions[inst_ptr].split(' ')
+		# have we run an instruction at this point previously?
+		if inst_ptr in instruction_history:
+
+			if len(all_jump_instructions) == 0:
+				for executed_instr in instruction_history:
+					if 'jmp' in instructions[executed_instr]:
+						all_jump_instructions.append(f'instruction: [{instructions[executed_instr]}] -> line number [{executed_instr + 1}], ')
+					elif 'nop' in instructions[executed_instr]  :
+						all_nop_instructions.append(f'instruction: [{instructions[executed_instr]}] -> line number [{executed_instr + 1}], ')
+
+			print('Duplicate detected exiting early')
+			print(f""" 
+Stack trace: 
+	Instruction ptr [{inst_ptr}]
+	Instruction ran: [{instruction_history}]
+	jump_instructions : [{all_jump_instructions}]
+	nop_instructions []: [{all_nop_instructions}]
+			""")
+			return accumulator, False
+		else:
+			instruction_history.append(inst_ptr)
+
+		if instruction == 'jmp':
+			inst_ptr += int(value)
+			continue
+
+		elif instruction == 'acc':
+			accumulator += int(value)
+			inst_ptr += 1
+			continue
+
+		elif instruction == 'nop':
+			inst_ptr += 1
+			continue
+	print('run complete...')
+	return accumulator, True
